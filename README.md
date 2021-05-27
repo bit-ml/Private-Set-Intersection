@@ -1,4 +1,4 @@
-We implemented in Python a **Private Set Intersection (PSI)** protocol, a functionality that allows two parties to compute their common elements, without revealing their datasets or learning anything but their intersection. In our setup, these parties are:
+We implemented in Python a **Private Set Intersection (PSI)** protocol, a functionality that allows two parties to *privately join their sets* in order to compute their *common elements*. In our setup, these parties are:
 ​
 * a *server* having a large database
 * a *client* who would like to *privately* query the database.
