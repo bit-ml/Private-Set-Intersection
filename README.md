@@ -12,8 +12,10 @@ The starting point of our implementation consisted of this [paper](https://eprin
 ​
 Suppose the client wants to check if his query *x* belongs to the database of the server. Consider this database having as entries the integers *y_1,...,y_n*. Then the server can associate to its database the following polynomial *P(X) = (X-y_1) * ... * (X-y_n).* If  *x* belongs to the database, then *P* vanishes at *x*. This is the **main idea of the protocol**: the server should compute this evaluation of *P* at *x* in a secure way and send it to the client. 
 ​
+
 More precisely, the client sends his query encrypted with a homomorphic encryption scheme, *Enc(x)*. Then the server evaluates *P* at the given encryption: due to homomorphic properties, the result will turn out to be *Enc(P(x)).* Then the client decrypts this result and checks if it is equal to 0; in case of equality, the query belongs to the database. 
 ​
+
 The protocol is split in two parts: offline phase and online phase. The online phase starts when the client performs the OPRF protocol with the server, for encoding its items with the server's secret key.
 ​
 ### The preprocessing phase
