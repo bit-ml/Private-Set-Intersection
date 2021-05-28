@@ -4,7 +4,7 @@ We implemented in Python a **Private Set Intersection (PSI)** protocol, a functi
 * a *client* who would like to *privately* query the database.
 ​
 ## How it works
-The starting point of our implementation consisted of this [paper](https://eprint.iacr.org/2017/299.pdf) and its [follow-up](https://eprint.iacr.org/2018/787.pdf). This protocol uses **homomorphic encryption**, a cryptographic primitive that allows performing computations on encrypted data and only the secret key holder (in our case, the client) has access to the result of these computations. For implementing PSI, we used the [FV] homomorphic encryption scheme from the [TenSEAL](https://github.com/OpenMined/TenSEAL) library. You can also check out a concurrent [SEAL](https://github.com/microsoft/SEAL)-based [C++ implementation](https://github.com/microsoft/APSI) of the protocol that has been recently published by Microsoft.
+Our implementation is based on this [paper](https://eprint.iacr.org/2017/299.pdf) and its [follow-up](https://eprint.iacr.org/2018/787.pdf). This protocol uses **homomorphic encryption**, a cryptographic primitive that allows *computations on encrypted data* in such a way that only *the secret key holder has access to the decryption of the result of these computations*. For implementing PSI, we used the [FV] homomorphic encryption scheme from the [TenSEAL](https://github.com/OpenMined/TenSEAL) library. You can also check out a concurrent [SEAL](https://github.com/microsoft/SEAL)-based [C++ implementation](https://github.com/microsoft/APSI) of the protocol that has been recently published by Microsoft.
 
 **Disclaimer:** Our implementation is not meant for production use. Use it at your own risk.
 ​
