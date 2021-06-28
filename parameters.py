@@ -32,9 +32,3 @@ alpha = 16
 # windowing parameter
 ell = 2
 
-f = open("our_results", 'a')
-f.write("|C|="+str(client_size))
-f.write("|S|="+str(server_size))
-f.write("alpha="+str(alpha))
-f.write("ell="+str(ell))
-f.close

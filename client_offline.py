@@ -24,8 +24,3 @@ pickle.dump(encoded_client_set, g)
 g.close()   
 t1 = time()
 print('Client OFFLINE time: {:.2f}s'.format(t1-t0))
-
-# ------------------------------
-my_file = open('our_results', 'a')
-my_file.write("C_offline " + str(t1 - t0) + '\n')
-my_file.close()

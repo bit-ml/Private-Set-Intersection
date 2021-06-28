@@ -65,8 +65,3 @@ t3 = time()
 #print('Hashing time {:.2f}s'.format(t2 - t1))
 #print('Poly coefficients from roots time {:.2f}s'.format(t3 - t2))
 print('Server OFFLINE time {:.2f}s'.format(t3 - t0))
-
-#------------------------------
-my_file = open('our_results', 'a')
-my_file.write("S_offline "+str(t3 - t0)+'\n')
-my_file.close()
