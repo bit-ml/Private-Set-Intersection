@@ -72,4 +72,4 @@ This scenario corresponds to the windowing parameter ```ell = 1```.
     * This index helps him recover the common element.
 ​
 ## How to run
-You can generate the datasets of the client and the server by running ```set_gen.py```. Then run ```server_offline.py``` and ```client_offline.py``` to preprocess them. Now go the online phase of the protocol by running ```server_online.py``` and ```client_online.py```. Have fun! :smile: 
+Check ```requirements.txt``` before running the files. You can generate the datasets of the client and the server by running ```set_gen.py```. Then run ```server_offline.py``` and ```client_offline.py``` to preprocess them. Now go the online phase of the protocol by running ```server_online.py``` and ```client_online.py```. Have fun! :smile: 
