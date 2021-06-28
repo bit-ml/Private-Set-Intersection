@@ -17,7 +17,7 @@ logB_ell = int(log2(minibin_capacity) / ell) + 1 # <= 2 ** HE.depth
 dummy_msg_client = 2 ** (sigma_max - output_bits + log_no_hashes)
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('', 4770))
+client.connect(('localhost', 4470))
 
 # Setting the public and private contexts for the BFV Homorphic Encryption scheme
 private_context = ts.context(ts.SCHEME_TYPE.BFV, poly_modulus_degree=poly_modulus_degree, plain_modulus=plain_modulus)
@@ -31,9 +31,9 @@ encoded_client_set_serialized = pickle.dumps(encoded_client_set, protocol=None)
 
 L = len(encoded_client_set_serialized)
 sL = str(L) + ' ' * (10 - len(str(L)))
-client_to_server_communication_oprf = L #in bytes
+client_to_server_communiation_oprf = L #in bytes
 # The length of the message is sent first
-client.sendall(sL.encode())
+client.sendall((sL).encode())
 client.sendall(encoded_client_set_serialized)
 
 L = client.recv(10).decode().strip()
@@ -64,43 +64,37 @@ for i in range(CH.number_of_bins):
         CH.data_structure[i] = dummy_msg_client
 
 # We apply the windowing procedure for each item from the Cuckoo structure
-number_of_batches = int(CH.number_of_bins / poly_modulus_degree)
-encryptions_serialized = []
-for s in range(number_of_batches):
+windowed_items = []
+for item in CH.data_structure:
+    windowed_items.append(windowing(item, minibin_capacity, plain_modulus))
 
-    windowed_items = []
-    for item in CH.data_structure[s * poly_modulus_degree: s * poly_modulus_degree + poly_modulus_degree]:
-        windowed_items.append(windowing(item, minibin_capacity, plain_modulus))
+plain_query = [None for k in range(len(windowed_items))]
+enc_query = [[None for j in range(logB_ell)] for i in range(1, base)]
 
+# We create the <<batched>> query to be sent to the server
+# By our choice of parameters, number of bins = poly modulus degree (m/N =1), so we get (base - 1) * logB_ell ciphertexts
+for j in range(logB_ell):
+    for i in range(base - 1):
+        if ((i + 1) * base ** j - 1 < minibin_capacity):
+            for k in range(len(windowed_items)):
+                plain_query[k] = windowed_items[k][i][j]
+            enc_query[i][j] = ts.bfv_vector(private_context, plain_query)
 
-    # We create the <<batched>> query to be sent to the server
-    # By our choice of parameters, number of bins = poly modulus degree (m/N =1), so we get (base - 1) * logB_ell ciphertexts
-    plain_query = [None for k in range(len(windowed_items))]
-    enc_query = [[None for j in range(logB_ell)] for i in range(1, base)]
-    for j in range(logB_ell):
-        for i in range(base - 1):
-            if ((i + 1) * base ** j - 1 < minibin_capacity):
-                for k in range(len(windowed_items)):
-                    plain_query[k] = windowed_items[k][i][j]
-                enc_query[i][j] = ts.bfv_vector(private_context, plain_query)
-
-    enc_query_serialized = [[None for j in range(logB_ell)] for i in range(1, base)]
-
-    for j in range(logB_ell):
-        for i in range(base - 1):
-            if ((i + 1) * base ** j - 1 < minibin_capacity):
-                enc_query_serialized[i][j] = enc_query[i][j].serialize()
-    encryptions_serialized.append(enc_query_serialized)
+enc_query_serialized = [[None for j in range(logB_ell)] for i in range(1, base)]
+for j in range(logB_ell):
+    for i in range(base - 1):
+        if ((i + 1) * base ** j - 1 < minibin_capacity):
+            enc_query_serialized[i][j] = enc_query[i][j].serialize()
 
 context_serialized = public_context.serialize()
-message_to_be_sent = [context_serialized, encryptions_serialized]
+message_to_be_sent = [context_serialized, enc_query_serialized]
 message_to_be_sent_serialized = pickle.dumps(message_to_be_sent, protocol=None)
 t1 = time()
 L = len(message_to_be_sent_serialized)
 sL = str(L) + ' ' * (10 - len(str(L)))
-client_to_server_communication_query = L
+client_to_server_communiation_query = L 
 #the lenght of the message is sent first
-client.sendall(sL.encode())
+client.sendall((sL).encode())
 print(" * Sending the context and ciphertext to the server....")
 # Now we send the message to the server
 client.sendall(message_to_be_sent_serialized)
@@ -119,30 +113,30 @@ t2 = time()
 server_to_client_query_response = len(answer) #bytes
 # Here is the vector of decryptions of the answer
 ciphertexts = pickle.loads(answer)
-decryptions = [[] for s in range(number_of_batches)]
-for s in range(number_of_batches):
-    for ct in ciphertexts[s]:
-        decryptions[s].append(ts.bfv_vector_from(private_context, ct).decrypt())
+decryptions = []
+for ct in ciphertexts:
+    decryptions.append(ts.bfv_vector_from(private_context, ct).decrypt())
 
-count = [[0] * alpha for s in range(number_of_batches)]
+recover_CH_structure = []
+for matrix in windowed_items:
+    recover_CH_structure.append(matrix[0][0])
+
+count = [0] * alpha
 
 g = open('client_set', 'r')
 client_set_entries = g.readlines()
 g.close()
 client_intersection = []
-for s in range(number_of_batches):
-    for j in range(alpha):
-        for i in range(poly_modulus_degree):
-            if decryptions[s][j][i] == 0:
-                count[s][j] = count[s][j] + 1
+for j in range(alpha):
+    for i in range(poly_modulus_degree):
+        if decryptions[j][i] == 0:
+            count[j] = count[j] + 1
 
-                # The index i is the location of the element in the intersection
-                # Here we recover this element from the Cuckoo hash structure
-                location = s * poly_modulus_degree + i
-                index_of_hash = CH.data_structure[location] % (2 ** log_no_hashes)
-                PRFed_common_element = reconstruct_item(CH.data_structure[location], location, hash_seeds[index_of_hash])
-                index = PRFed_client_set.index(PRFed_common_element)
-                client_intersection.append(int(client_set_entries[index][:-1]))
+            # The index i is the location of the element in the intersection
+            # Here we recover this element from the Cuckoo hash structure
+            PRFed_common_element = reconstruct_item(recover_CH_structure[i], i, hash_seeds[recover_CH_structure[i] % (2 ** log_no_hashes)])
+            index = PRFed_client_set.index(PRFed_common_element)
+            client_intersection.append(int(client_set_entries[index][:-1]))
 
 h = open('intersection', 'r')
 real_intersection = [int(line[:-1]) for line in h]
@@ -152,14 +146,8 @@ print('\n Intersection recovered correctly: {}'.format(set(client_intersection) 
 print("Disconnecting...\n")
 print('  Client ONLINE computation time {:.2f}s'.format(t1 - t0 + t3 - t2))
 print('  Communication size:')
-print('    ~ Client --> Server:  {:.2f} MB'.format((client_to_server_communication_oprf + client_to_server_communication_query )/ 2 ** 20))
+print('    ~ Client --> Server:  {:.2f} MB'.format((client_to_server_communiation_oprf + client_to_server_communiation_query )/ 2 ** 20))
 print('    ~ Server --> Client:  {:.2f} MB'.format((server_to_client_communication_oprf + server_to_client_query_response )/ 2 ** 20))
 client.close()
 
-# ------------------------------
-my_file = open('our_results', 'a')
-my_file.write('Client ONLINE computation time {:.2f}s'.format(t1 - t0 + t3 - t2)+'\n')
-my_file.write('Client --> Server:  {:.2f} MB'.format((client_to_server_communication_oprf + client_to_server_communication_query )/ 2 ** 20)+'\n')
-my_file.write('Server --> Client:  {:.2f} MB'.format((server_to_client_communication_oprf + server_to_client_query_response )/ 2 ** 20)+'\n')
-my_file.write('-------------------------------------------------')
-my_file.close()
+

@@ -21,12 +21,3 @@ h = open('intersection', 'w')
 for item in intersection:
 	h.write(str(item) + '\n')
 h.close()
-
-#------------------------------------------------------------------------
-from parameters import alpha, ell
-f = open("our_results", 'a')
-f.write("|C|="+str(client_size)+'\n')
-f.write("|S|="+str(server_size)+'\n')
-f.write("alpha="+str(alpha)+'\n')
-f.write("ell="+str(ell)+'\n')
-f.close()
